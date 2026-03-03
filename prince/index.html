@@ -2,143 +2,113 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <title>Prince of Persia — Marsala Games</title>
+  <meta name="description" content="Prince of Persia reimplementation in HTML5 — Marsala Games Arcade">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2694;&#xFE0F;</text></svg>">
+  <link rel="manifest" href="site.webmanifest">
 
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; overflow: hidden; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
 
     body {
-      font-family: 'Courier New', 'Lucida Console', monospace;
-      color: #e8e6f0;
+      font-family: 'Courier New', monospace;
+      color: #e0d8c0;
       display: flex;
       flex-direction: column;
-      background: #0a0a0a;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
-    /* ── Scanline overlay (CRT effect) ── */
+    /* ── Header bar ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: rgba(0,0,0,0.9);
+      border-bottom: 1px solid rgba(245,158,11,0.3);
+      z-index: 20;
+      flex-shrink: 0;
+    }
+    .header a {
+      color: rgba(245,158,11,0.7);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+    .header a:hover { color: #f59e0b; }
+    .header .title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #f59e0b;
+      text-shadow: 0 0 10px rgba(245,158,11,0.5);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .header-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .header-btn {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.3);
+      color: rgba(245,158,11,0.7);
+      padding: 4px 10px;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .header-btn:hover {
+      background: rgba(245,158,11,0.2);
+      color: #f59e0b;
+    }
+
+    /* ── Game area ── */
+    .game-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #gameContainer {
+      width: 100%;
+      height: 100%;
+    }
+    #gameContainer canvas {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain;
+      image-rendering: pixelated;
+      display: block;
+    }
+
+    /* ── Scanline CRT overlay ── */
     .scanlines {
       position: fixed;
       inset: 0;
       pointer-events: none;
-      z-index: 100;
+      z-index: 10;
       background: repeating-linear-gradient(
         0deg,
-        rgba(0,0,0,0.12) 0px,
-        rgba(0,0,0,0.12) 1px,
+        rgba(0,0,0,0.08) 0px,
+        rgba(0,0,0,0.08) 1px,
         transparent 1px,
         transparent 3px
       );
     }
 
-    /* ── Header ── */
-    .header {
-      padding: 10px 20px 6px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-shrink: 0;
-      border-bottom: 1px solid rgba(245,158,11,.12);
-      background: rgba(0,0,0,0.4);
-      position: relative;
-      z-index: 10;
-    }
-    .back-btn {
-      color: #8a87a8;
-      text-decoration: none;
-      font-size: 14px;
-      transition: color .2s;
-    }
-    .back-btn:hover { color: #f59e0b; }
-    .header h1 {
-      font-size: 20px;
-      color: #f59e0b;
-      flex: 1;
-      text-shadow: 0 0 20px rgba(245,158,11,.25), 0 0 40px rgba(245,158,11,.1);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-    }
-    .header-year {
-      font-size: 13px;
-      color: #6b7280;
-      font-weight: normal;
-      text-transform: none;
-      letter-spacing: 0;
-    }
-    .header-actions { display: flex; gap: 8px; align-items: center; }
-    .icon-btn {
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(245,158,11,.2);
-      color: #d1d5db;
-      width: 34px; height: 34px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all .2s;
-      font-size: 16px;
-    }
-    .icon-btn:hover {
-      background: rgba(245,158,11,.15);
-      border-color: #f59e0b;
-      color: #f59e0b;
-      box-shadow: 0 0 12px rgba(245,158,11,.2);
-    }
-    .icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
-    .icon-btn.active {
-      background: rgba(245,158,11,.2);
-      border-color: #f59e0b;
-      color: #f59e0b;
-    }
-
-    /* ── Game wrapper ── */
-    .game-wrapper {
-      flex: 1;
-      padding: 8px 10px 6px;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      position: relative;
-    }
-    .game-frame {
-      flex: 1;
-      background: #000;
-      border: 2px solid rgba(245,158,11,.2);
-      border-radius: 8px;
-      overflow: hidden;
-      position: relative;
-      min-height: 200px;
-      box-shadow:
-        0 0 30px rgba(245,158,11,.06),
-        inset 0 0 60px rgba(0,0,0,0.5);
-    }
-
-    /* ── CRT glow on game frame ── */
-    .game-frame::after {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      border-radius: 10px;
-      pointer-events: none;
-      z-index: 5;
-      box-shadow:
-        inset 0 0 80px rgba(245,158,11,0.03),
-        0 0 20px rgba(245,158,11,0.04);
-    }
-
-    /* ── iframe ── */
-    .game-frame iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-      background: #000;
-    }
-
-    /* ── Loading overlay ── */
+    /* ── Loading screen ── */
     .loading-overlay {
       position: absolute;
       inset: 0;
@@ -146,500 +116,317 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(ellipse at center, #1a1510 0%, #000 80%);
-      z-index: 50;
-      transition: opacity .8s ease;
-      gap: 8px;
+      background: #000;
+      z-index: 30;
+      transition: opacity 0.5s;
     }
-    .loading-overlay.hidden { opacity: 0; pointer-events: none; }
-
-    /* ── Hourglass animation ── */
-    .hourglass-anim {
-      width: 64px;
-      height: 64px;
-      margin-bottom: 12px;
-      animation: hourglassRotate 2.4s ease-in-out infinite;
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
-    @keyframes hourglassRotate {
-      0% { transform: rotate(0deg); }
-      40% { transform: rotate(0deg); }
-      50% { transform: rotate(180deg); }
-      90% { transform: rotate(180deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .hourglass-anim .sand-top {
-      animation: sandDrain 2.4s ease-in-out infinite;
-      transform-origin: center;
-    }
-    @keyframes sandDrain {
-      0%   { opacity: 1; }
-      45%  { opacity: 0; }
-      55%  { opacity: 1; }
-      100% { opacity: 1; }
-    }
-    .hourglass-anim .sand-bottom {
-      animation: sandFill 2.4s ease-in-out infinite;
-      transform-origin: center;
-    }
-    @keyframes sandFill {
-      0%   { opacity: 0; }
-      45%  { opacity: 1; }
-      55%  { opacity: 0; }
-      100% { opacity: 0; }
-    }
-    .hourglass-anim .sand-stream {
-      animation: streamPulse 2.4s ease-in-out infinite;
-    }
-    @keyframes streamPulse {
-      0%   { opacity: 0; }
-      10%  { opacity: 1; }
-      40%  { opacity: 1; }
-      50%  { opacity: 0; }
-      100% { opacity: 0; }
-    }
-
     .loading-title {
-      color: #f59e0b;
-      font-size: 18px;
+      font-size: 28px;
       font-weight: bold;
-      letter-spacing: 2px;
-      text-shadow: 0 0 12px rgba(245,158,11,.3);
+      color: #f59e0b;
+      text-shadow: 0 0 20px rgba(245,158,11,0.6);
+      letter-spacing: 4px;
       text-transform: uppercase;
+      margin-bottom: 8px;
     }
     .loading-sub {
-      color: #6b7280;
-      font-size: 13px;
-      min-height: 1.2em;
-    }
-
-    .progress-container {
-      width: 220px;
-      height: 6px;
-      background: rgba(255,255,255,.08);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-top: 12px;
-      border: 1px solid rgba(245,158,11,.15);
-    }
-    .progress-bar {
-      height: 100%;
-      width: 30%;
-      background: linear-gradient(90deg, #b45309, #f59e0b, #fbbf24);
-      border-radius: 3px;
-      box-shadow: 0 0 8px rgba(245,158,11,.4);
-      animation: progressPulse 1.5s ease-in-out infinite;
-    }
-    @keyframes progressPulse {
-      0%, 100% { width: 30%; margin-left: 0; }
-      50% { width: 50%; margin-left: 25%; }
-    }
-
-    .loading-tip {
-      margin-top: 20px;
-      padding: 10px 18px;
-      background: rgba(245,158,11,.06);
-      border: 1px solid rgba(245,158,11,.12);
-      border-radius: 6px;
       font-size: 12px;
-      color: #a8a29e;
-      max-width: 340px;
-      text-align: center;
-      line-height: 1.5;
-      opacity: 0;
-      animation: tipFadeIn .5s ease forwards .8s;
+      color: rgba(245,158,11,0.5);
+      margin-bottom: 30px;
+      letter-spacing: 2px;
     }
-    .loading-tip strong { color: #f59e0b; }
-    @keyframes tipFadeIn { to { opacity: 1; } }
+    .loading-bar-track {
+      width: 240px;
+      height: 4px;
+      background: rgba(245,158,11,0.15);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .loading-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #f59e0b;
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+    .loading-hint {
+      font-size: 11px;
+      color: rgba(245,158,11,0.4);
+    }
 
     /* ── Controls overlay ── */
     .controls-overlay {
-      position: absolute;
+      position: fixed;
       inset: 0;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,.92);
-      z-index: 40;
-      cursor: pointer;
-      transition: opacity .5s ease;
-      padding: 20px;
+      background: rgba(0,0,0,0.88);
+      z-index: 50;
+      opacity: 1;
+      transition: opacity 0.3s;
     }
-    .controls-overlay.hidden { opacity: 0; pointer-events: none; }
-
-    .controls-title {
-      font-size: 26px;
+    .controls-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .controls-box {
+      background: rgba(20,15,10,0.95);
+      border: 1px solid rgba(245,158,11,0.3);
+      padding: 28px 36px;
+      max-width: 440px;
+      width: 90%;
+    }
+    .controls-box h2 {
       color: #f59e0b;
-      margin-bottom: 6px;
-      text-shadow: 0 0 20px rgba(245,158,11,.4), 0 0 40px rgba(245,158,11,.15);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-    }
-    .controls-subtitle {
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 24px;
+      font-size: 16px;
       text-transform: uppercase;
       letter-spacing: 3px;
+      margin-bottom: 20px;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(245,158,11,0.4);
     }
-
     .controls-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px 28px;
-      margin-bottom: 28px;
-      max-width: 420px;
+      gap: 10px 24px;
     }
-    .control-item { display: flex; align-items: center; gap: 10px; }
-    .control-key {
-      background: #1f2937;
-      border: 1px solid rgba(245,158,11,.25);
-      border-bottom: 3px solid rgba(245,158,11,.3);
-      border-radius: 5px;
-      padding: 5px 10px;
-      color: #fbbf24;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      font-weight: bold;
-      min-width: 36px;
-      text-align: center;
-      white-space: nowrap;
-      box-shadow: 0 2px 4px rgba(0,0,0,.4);
+    .control-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .control-label { color: #d1d5db; font-size: 13px; }
-
-    .controls-play-prompt {
-      margin-top: 8px;
-      font-size: 16px;
+    .key {
+      display: inline-block;
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.3);
       color: #f59e0b;
-      animation: promptPulse 2s ease-in-out infinite;
-    }
-    @keyframes promptPulse {
-      0%, 100% { opacity: .6; }
-      50% { opacity: 1; }
-    }
-
-    .controls-note {
-      margin-top: 16px;
+      padding: 3px 8px;
       font-size: 11px;
-      color: #4b5563;
+      font-family: inherit;
+      min-width: 28px;
       text-align: center;
-      line-height: 1.5;
+    }
+    .control-label {
+      font-size: 12px;
+      color: rgba(224,216,192,0.7);
+    }
+    .controls-dismiss {
+      display: block;
+      margin: 20px auto 0;
+      font-size: 11px;
+      color: rgba(245,158,11,0.5);
+      text-align: center;
+      animation: blink 1.5s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
 
     /* ── Footer ── */
-    .footer-bar {
-      padding: 6px 20px;
+    .footer {
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
-      justify-content: center;
-      gap: 12px;
-      font-size: 11px;
-      color: #4b5563;
+      justify-content: space-between;
+      padding: 6px 16px;
+      background: rgba(0,0,0,0.9);
+      border-top: 1px solid rgba(245,158,11,0.15);
+      font-size: 10px;
+      color: rgba(245,158,11,0.3);
       flex-shrink: 0;
-      border-top: 1px solid rgba(245,158,11,.06);
-      background: rgba(0,0,0,0.3);
-      position: relative;
-      z-index: 10;
+      z-index: 20;
     }
-    .footer-bar a { color: #78716c; text-decoration: none; transition: color .2s; }
-    .footer-bar a:hover { color: #f59e0b; }
-    .footer-bar .sep { color: #374151; }
+    .footer a {
+      color: rgba(245,158,11,0.4);
+      text-decoration: none;
+    }
+    .footer a:hover { color: rgba(245,158,11,0.7); }
 
-    .touch-hint {
-      display: none;
-      text-align: center;
-      padding: 4px 10px;
-      font-size: 11px;
-      color: #6b7280;
-      flex-shrink: 0;
-    }
-    @media (hover: none) and (pointer: coarse) {
-      .touch-hint { display: block; }
-    }
+    /* ── Fullscreen mode ── */
+    .fullscreen .header,
+    .fullscreen .footer { display: none; }
+    .fullscreen .game-wrapper { height: 100vh; }
 
-    /* ── Responsive ── */
+    .flipped { transform: scaleY(-1); }
+
     @media (max-width: 600px) {
-      .header { padding: 8px 12px 4px; gap: 10px; }
-      .header h1 { font-size: 16px; letter-spacing: 1px; }
-      .game-wrapper { padding: 4px 4px 4px; }
-      .game-frame { border-radius: 4px; border-width: 1px; }
-      .controls-grid { grid-template-columns: 1fr; gap: 8px; }
-      .controls-title { font-size: 20px; }
-      .footer-bar { padding: 4px 10px; font-size: 10px; gap: 6px; }
-      .loading-tip { max-width: 280px; font-size: 11px; }
-    }
-
-    /* ── Fullscreen adjustments ── */
-    :fullscreen .game-frame,
-    :-webkit-full-screen .game-frame {
-      border: none;
-      border-radius: 0;
-    }
-    :fullscreen .header,
-    :-webkit-full-screen .header,
-    :fullscreen .footer-bar,
-    :-webkit-full-screen .footer-bar,
-    :fullscreen .touch-hint,
-    :-webkit-full-screen .touch-hint {
-      display: none;
-    }
-    :fullscreen .game-wrapper,
-    :-webkit-full-screen .game-wrapper {
-      padding: 0;
-    }
-    :fullscreen .scanlines,
-    :-webkit-full-screen .scanlines {
-      z-index: 9999;
+      .header .title { font-size: 12px; letter-spacing: 1px; }
+      .controls-grid { grid-template-columns: 1fr; }
+      .controls-box { padding: 20px; }
     }
   </style>
-</head>
-<body>
 
-  <!-- CRT scanline overlay -->
+  <!-- PrinceJS engine -->
+  <script src="lib/phaser.min.js"></script>
+  <script src="src/Boot.js"></script>
+  <script src="src/Preloader.js"></script>
+  <script src="src/Game.js"></script>
+  <script src="src/Utils.js"></script>
+  <script src="src/Title.js"></script>
+  <script src="src/EndTitle.js"></script>
+  <script src="src/Credits.js"></script>
+  <script src="src/Cutscene.js"></script>
+  <script src="src/Scene.js"></script>
+  <script src="src/Level.js"></script>
+  <script src="src/LevelBuilder.js"></script>
+  <script src="src/Actor.js"></script>
+  <script src="src/Fighter.js"></script>
+  <script src="src/Enemy.js"></script>
+  <script src="src/Kid.js"></script>
+  <script src="src/Mouse.js"></script>
+  <script src="src/Interface.js"></script>
+  <script src="src/tiles/Base.js"></script>
+  <script src="src/tiles/Button.js"></script>
+  <script src="src/tiles/Chopper.js"></script>
+  <script src="src/tiles/Clock.js"></script>
+  <script src="src/tiles/ExitDoor.js"></script>
+  <script src="src/tiles/Gate.js"></script>
+  <script src="src/tiles/Loose.js"></script>
+  <script src="src/tiles/Mirror.js"></script>
+  <script src="src/tiles/Potion.js"></script>
+  <script src="src/tiles/Skeleton.js"></script>
+  <script src="src/tiles/Spikes.js"></script>
+  <script src="src/tiles/Star.js"></script>
+  <script src="src/tiles/Sword.js"></script>
+  <script src="src/tiles/Torch.js"></script>
+</head>
+<body oncontextmenu="return false;">
   <div class="scanlines"></div>
 
+  <!-- Header -->
   <div class="header">
-    <a href="/" class="back-btn">&#8592; Back to Arcade</a>
-    <h1>Prince of Persia <span class="header-year">(1989)</span></h1>
-    <div class="header-actions">
-      <button class="icon-btn" id="btn-controls" title="Show Controls">
-        <svg viewBox="0 0 24 24"><path d="M21 6H3a2 2 0 00-2 2v8a2 2 0 002 2h18a2 2 0 002-2V8a2 2 0 00-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm4-3a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>
-      </button>
-      <button class="icon-btn" id="btn-fullscreen" title="Fullscreen (F11)">
-        <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-      </button>
+    <a href="/">&#8592; Arcade</a>
+    <span class="title">Prince of Persia</span>
+    <div class="header-buttons">
+      <button class="header-btn" id="btnControls" title="Controls">&#9000;</button>
+      <button class="header-btn" id="btnFullscreen" title="Fullscreen">&#x26F6;</button>
     </div>
   </div>
 
-  <div class="touch-hint">
-    PrinceJS supports keyboard controls. For best experience, use a device with a physical keyboard.
+  <!-- Game -->
+  <div class="game-wrapper">
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-title">Prince of Persia</div>
+      <div class="loading-sub">HTML5 Reimplementation</div>
+      <div class="loading-bar-track">
+        <div class="loading-bar-fill" id="loadingBar"></div>
+      </div>
+      <div class="loading-hint">Arrow keys to move &middot; Shift = careful &middot; Space = fight</div>
+    </div>
+    <div id="gameContainer"></div>
   </div>
 
-  <div class="game-wrapper" id="game-wrapper">
-    <div class="game-frame" id="game-frame">
-
-      <!-- Loading overlay -->
-      <div class="loading-overlay" id="loading">
-        <svg class="hourglass-anim" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="12" y="4" width="40" height="4" rx="1" fill="#f59e0b"/>
-          <rect x="12" y="56" width="40" height="4" rx="1" fill="#f59e0b"/>
-          <path d="M18 8 L32 30 L46 8" stroke="#b45309" stroke-width="2" fill="none"/>
-          <path d="M18 56 L32 34 L46 56" stroke="#b45309" stroke-width="2" fill="none"/>
-          <polygon class="sand-top" points="22,12 42,12 32,26" fill="#fbbf24" opacity=".7"/>
-          <line class="sand-stream" x1="32" y1="26" x2="32" y2="38" stroke="#fbbf24" stroke-width="2" opacity="0"/>
-          <polygon class="sand-bottom" points="24,52 40,52 32,40" fill="#fbbf24" opacity="0"/>
-        </svg>
-
-        <div class="loading-title">Prince of Persia</div>
-        <div class="loading-sub" id="loading-status">Loading PrinceJS engine...</div>
-
-        <div class="progress-container">
-          <div class="progress-bar" id="progress-bar"></div>
-        </div>
-
-        <div class="loading-tip">
-          <strong>Tip:</strong> Use <strong>Shift</strong> to walk carefully near edges &mdash; one wrong step and the Prince falls!
-        </div>
+  <!-- Controls overlay -->
+  <div class="controls-overlay hidden" id="controlsOverlay">
+    <div class="controls-box">
+      <h2>Controls</h2>
+      <div class="controls-grid">
+        <div class="control-item"><span class="key">&#8592; &#8594;</span><span class="control-label">Run</span></div>
+        <div class="control-item"><span class="key">&#8593;</span><span class="control-label">Jump / Climb</span></div>
+        <div class="control-item"><span class="key">&#8595;</span><span class="control-label">Crouch / Drop</span></div>
+        <div class="control-item"><span class="key">Shift</span><span class="control-label">Walk carefully</span></div>
+        <div class="control-item"><span class="key">Space</span><span class="control-label">Draw sword / Fight</span></div>
+        <div class="control-item"><span class="key">Shift+&#8593;</span><span class="control-label">Block (in combat)</span></div>
+        <div class="control-item"><span class="key">Ctrl+A</span><span class="control-label">Restart level</span></div>
+        <div class="control-item"><span class="key">Esc</span><span class="control-label">Pause</span></div>
       </div>
-
-      <!-- Controls overlay -->
-      <div class="controls-overlay hidden" id="controls-overlay">
-        <div class="controls-title">&#9876; Prince of Persia</div>
-        <div class="controls-subtitle">Keyboard Controls</div>
-
-        <div class="controls-grid">
-          <div class="control-item">
-            <span class="control-key">&#8592; &#8594;</span>
-            <span class="control-label">Run left / right</span>
-          </div>
-          <div class="control-item">
-            <span class="control-key">&#8593;</span>
-            <span class="control-label">Jump / Climb up</span>
-          </div>
-          <div class="control-item">
-            <span class="control-key">&#8595;</span>
-            <span class="control-label">Crouch / Climb down</span>
-          </div>
-          <div class="control-item">
-            <span class="control-key">Shift</span>
-            <span class="control-label">Walk carefully</span>
-          </div>
-          <div class="control-item">
-            <span class="control-key">Space</span>
-            <span class="control-label">Show sword</span>
-          </div>
-          <div class="control-item">
-            <span class="control-key">Shift+&#8593;</span>
-            <span class="control-label">Standing jump</span>
-          </div>
-          <div class="control-item">
-            <span class="control-key">Ctrl+A</span>
-            <span class="control-label">Restart level</span>
-          </div>
-          <div class="control-item">
-            <span class="control-key">Esc</span>
-            <span class="control-label">Pause game</span>
-          </div>
-        </div>
-
-        <div class="controls-play-prompt">&#9654; Click anywhere to play</div>
-        <div class="controls-note">
-          The hourglass is ticking &mdash; you have 60 minutes to rescue the Princess.<br>
-          HTML5 reimplementation by <a href="https://github.com/oklemenz/PrinceJS" target="_blank" rel="noopener" style="color:#f59e0b;text-decoration:none;">PrinceJS</a>
-        </div>
-      </div>
-
-      <!-- Game iframe (PrinceJS) -->
-      <iframe
-        id="game-iframe"
-        src="https://princejs.com"
-        allow="autoplay; fullscreen"
-        allowfullscreen
-        loading="eager"
-        style="opacity: 0; transition: opacity .6s ease;"
-        title="Prince of Persia - PrinceJS"
-      ></iframe>
-
+      <span class="controls-dismiss">Click anywhere to play</span>
     </div>
   </div>
 
-  <div class="footer-bar">
-    <span>Prince of Persia &copy; 1989 Jordan Mechner / Br&oslash;derbund</span>
-    <span class="sep">|</span>
-    <span>Powered by <a href="https://github.com/oklemenz/PrinceJS" target="_blank" rel="noopener">PrinceJS</a> (HTML5/Phaser)</span>
-    <span class="sep">|</span>
-    <a href="/">&#8592; Marsala Games</a>
+  <!-- Footer -->
+  <div class="footer">
+    <span>Jordan Mechner / Broderbund (1989) &middot; Engine: <a href="https://github.com/oklemenz/PrinceJS" target="_blank" rel="noopener">PrinceJS</a></span>
+    <a href="/">Marsala Games</a>
   </div>
 
   <script>
-  (function() {
-    'use strict';
+    // ── Loading progress simulation ──
+    const loadingBar = document.getElementById('loadingBar');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    let loadProgress = 0;
+    const loadInterval = setInterval(() => {
+      loadProgress += Math.random() * 15 + 5;
+      if (loadProgress > 90) loadProgress = 90;
+      loadingBar.style.width = loadProgress + '%';
+    }, 300);
 
-    // -- DOM refs --
-    var iframe       = document.getElementById('game-iframe');
-    var loading      = document.getElementById('loading');
-    var statusEl     = document.getElementById('loading-status');
-    var controlsOv   = document.getElementById('controls-overlay');
-    var fsBtn        = document.getElementById('btn-fullscreen');
-    var ctrlBtn      = document.getElementById('btn-controls');
-    var gameWrapper  = document.getElementById('game-wrapper');
-    var gameFrame    = document.getElementById('game-frame');
+    // ── Start PrinceJS game ──
+    window.onload = () => {
+      const game = new Phaser.Game(640, 400, Phaser.AUTO, 'gameContainer', null, false, false);
+      game.state.add('Boot', PrinceJS.Boot);
+      game.state.add('Preloader', PrinceJS.Preloader);
+      game.state.add('Game', PrinceJS.Game);
+      game.state.add('Title', PrinceJS.Title);
+      game.state.add('EndTitle', PrinceJS.EndTitle);
+      game.state.add('Credits', PrinceJS.Credits);
+      game.state.add('Cutscene', PrinceJS.Cutscene);
+      game.state.start('Boot');
 
-    var iframeLoaded = false;
-    var loadTimeout  = null;
-
-    // -- Tips rotation for loading --
-    var tips = [
-      'Use <strong>Shift</strong> to walk carefully near edges &mdash; one wrong step and the Prince falls!',
-      'Press <strong>Space</strong> to draw your sword when enemies appear.',
-      'You have <strong>60 minutes</strong> to rescue the Princess. The clock starts at Level 1.',
-      'Look for loose floor tiles &mdash; they can open secret passages.',
-      'Press <strong>Shift + Arrow</strong> to take one step at a time on narrow ledges.',
-      'The <strong>mirror</strong> on Level 4 creates your shadow self. Do not fight him!',
-      'Potions can heal you, but some are <strong>poisoned</strong>. Choose wisely.',
-    ];
-    var currentTip = 0;
-    var tipEl = document.querySelector('.loading-tip');
-    var tipRotation = setInterval(function() {
-      currentTip = (currentTip + 1) % tips.length;
-      tipEl.innerHTML = '<strong>Tip:</strong> ' + tips[currentTip];
-    }, 4000);
-
-    // -- Hide loading when iframe loads --
-    function onIframeReady() {
-      if (iframeLoaded) return;
-      iframeLoaded = true;
-      clearTimeout(loadTimeout);
-      clearInterval(tipRotation);
-
-      statusEl.textContent = 'Ready!';
-
-      setTimeout(function() {
-        loading.classList.add('hidden');
-        iframe.style.opacity = '1';
-
-        // Show controls overlay on first visit
-        if (!localStorage.getItem('princejs_controls_seen')) {
-          controlsOv.classList.remove('hidden');
+      // Hide loading when Phaser creates its canvas
+      const checkCanvas = setInterval(() => {
+        const canvas = document.querySelector('#gameContainer canvas');
+        if (canvas) {
+          clearInterval(checkCanvas);
+          clearInterval(loadInterval);
+          loadingBar.style.width = '100%';
+          setTimeout(() => loadingOverlay.classList.add('hidden'), 400);
         }
-      }, 400);
+      }, 200);
+
+      // Fallback: hide loading after 8s regardless
+      setTimeout(() => {
+        clearInterval(loadInterval);
+        clearInterval(checkCanvas);
+        loadingBar.style.width = '100%';
+        loadingOverlay.classList.add('hidden');
+      }, 8000);
+    };
+
+    // ── Controls overlay ──
+    const controlsOverlay = document.getElementById('controlsOverlay');
+    const btnControls = document.getElementById('btnControls');
+
+    // Show controls on first visit
+    if (!localStorage.getItem('prince_controls_seen')) {
+      controlsOverlay.classList.remove('hidden');
+      localStorage.setItem('prince_controls_seen', '1');
     }
 
-    iframe.addEventListener('load', onIframeReady);
-
-    // Fallback: if iframe takes too long, hide loading after 10 seconds
-    loadTimeout = setTimeout(function() {
-      statusEl.textContent = 'Almost ready...';
-      setTimeout(onIframeReady, 2000);
-    }, 10000);
-
-    // -- Controls overlay dismiss --
-    controlsOv.addEventListener('click', function() {
-      controlsOv.classList.add('hidden');
-      localStorage.setItem('princejs_controls_seen', '1');
-      // Focus the iframe so keyboard input goes to the game
-      iframe.focus();
+    controlsOverlay.addEventListener('click', () => {
+      controlsOverlay.classList.add('hidden');
+    });
+    btnControls.addEventListener('click', () => {
+      controlsOverlay.classList.toggle('hidden');
     });
 
-    // -- Controls button toggle --
-    ctrlBtn.addEventListener('click', function() {
-      var isHidden = controlsOv.classList.contains('hidden');
-      if (isHidden) {
-        controlsOv.classList.remove('hidden');
-      } else {
-        controlsOv.classList.add('hidden');
-        iframe.focus();
-      }
+    // ── Fullscreen ──
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); }
     });
 
-    // -- Fullscreen --
-    fsBtn.addEventListener('click', function() {
-      var target = gameWrapper;
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        var fn = target.requestFullscreen || target.webkitRequestFullscreen || target.msRequestFullscreen;
-        if (fn) {
-          fn.call(target).then(function() {
-            iframe.focus();
-          }).catch(function() {});
-        }
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => {
+          document.body.classList.add('fullscreen');
+        }).catch(() => {});
       } else {
-        var efn = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
-        if (efn) efn.call(document);
-      }
-    });
-
-    // Update fullscreen button state
-    function updateFsBtn() {
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        fsBtn.classList.add('active');
-        fsBtn.title = 'Exit Fullscreen (F11)';
-      } else {
-        fsBtn.classList.remove('active');
-        fsBtn.title = 'Fullscreen (F11)';
+        document.exitFullscreen().then(() => {
+          document.body.classList.remove('fullscreen');
+        }).catch(() => {});
       }
     }
-    document.addEventListener('fullscreenchange', updateFsBtn);
-    document.addEventListener('webkitfullscreenchange', updateFsBtn);
-
-    // F11 key binding
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'F11') {
-        e.preventDefault();
-        fsBtn.click();
-      }
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) document.body.classList.remove('fullscreen');
     });
-
-    // -- Click on game frame focuses iframe --
-    gameFrame.addEventListener('click', function(e) {
-      if (iframeLoaded && controlsOv.classList.contains('hidden')) {
-        iframe.focus();
-      }
-    });
-
-  })();
   </script>
-
 </body>
 </html>

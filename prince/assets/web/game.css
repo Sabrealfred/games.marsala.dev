@@ -1,0 +1,39 @@
+html,
+body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    background-color: black;
+}
+
+@media (orientation: portrait) {
+    html,
+    body {
+        margin-top: -25px;
+    }
+}
+
+body,
+body * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.game {
+    margin: auto;
+    width: 100vw;
+    height: calc(100vh - env(safe-area-inset-bottom, 0px));
+}
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+.flipped {
+    transform: scaleY(-1);
+}
