@@ -418,8 +418,6 @@ function resolveCollisions(ent, isGoomba) {
   ent.y += ent.vy;
   ent.onGround = false;
   const left2 = ent.x + 2, right2 = ent.x + ent.w - 2;
-  const testH = ent.hitH || ent.h;
-  const testTop = ent.big ? ent.y - TS + 2 : ent.y;
   const bot2 = ent.y + ent.h;
 
   if (ent.vy > 0) {
@@ -572,12 +570,24 @@ function update(dt) {
     return;
   }
 
-  // Growing/shrinking animation
-  if (mario.growing > 0) { mario.growing--; return; }
-  if (mario.shrinking > 0) { mario.shrinking--; if (mario.shrinking === 0) mario.invincible = 90; return; }
+  // Growing/shrinking animation (don't freeze everything — keep enemies and camera updating)
+  const isTransforming = mario.growing > 0 || mario.shrinking > 0;
+  if (mario.growing > 0) mario.growing--;
+  if (mario.shrinking > 0) { mario.shrinking--; if (mario.shrinking === 0) mario.invincible = 90; }
 
   // Invincibility
   if (mario.invincible > 0) mario.invincible--;
+
+  // Skip Mario's own movement during grow/shrink but let enemies update
+  if (isTransforming) {
+    // Still update camera
+    camTarget = mario.x - VW / 3;
+    camTarget = Math.max(0, Math.min(camTarget, (LW * TS) - VW));
+    cam += (camTarget - cam) * 0.08;
+    cam = Math.max(0, Math.min(cam, (LW * TS) - VW));
+    updateHUD();
+    return;
+  }
 
   // Movement
   const maxSpd = run ? RUN_SPEED : WALK_SPEED;
@@ -1257,25 +1267,18 @@ function render() {
   ctx.save();
   ctx.translate(shakeX, shakeY);
 
-  // --- SKY GRADIENT ---
-  const skyGrad = ctx.createLinearGradient(0, 0, 0, VH);
-  skyGrad.addColorStop(0, '#4a90d9');
-  skyGrad.addColorStop(0.5, '#6bb3ff');
-  skyGrad.addColorStop(0.85, '#93c5fd');
-  skyGrad.addColorStop(1, '#bfdbfe');
-  ctx.fillStyle = skyGrad;
+  // --- SKY GRADIENT (cached) ---
+  ctx.fillStyle = cachedSkyGrad;
   ctx.fillRect(0, 0, VW, VH);
 
-  // --- PARALLAX CLOUDS (far layer) ---
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  for (let i = 0; i < 8; i++) {
-    const cx = ((i * 200 + 50) - cam * 0.15) % (VW + 200) - 50;
+  // --- PARALLAX CLOUDS (far layer, simplified for perf) ---
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  for (let i = 0; i < 6; i++) {
+    const cx = ((i * 260 + 50) - cam * 0.15) % (VW + 260) - 50;
+    if (cx < -80 || cx > VW + 80) continue;
     const cy = 30 + (i % 3) * 25;
     ctx.beginPath();
-    ctx.ellipse(cx, cy, 40 + (i%3)*15, 15 + (i%2)*8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(cx + 25, cy - 5, 25 + (i%2)*10, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, 45 + (i%3)*12, 16, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -1507,10 +1510,7 @@ function render() {
   // --- CASTLE ---
   const castleX = 208 * TS - cam;
   if (castleX < VW + 100) {
-    // Door
-    ctx.fillStyle = '#000';
-    ctx.fillRect(castleX + 4*TS - cam*0 + 0, 11 * TS - (208*TS - 208*TS), TS, TS * 2);
-    // Actually the castle is drawn via tiles, but add door arch
+    // Door arch
     const doorX = 212 * TS - cam;
     ctx.fillStyle = '#1a1a1a';
     ctx.fillRect(doorX, 11 * TS, TS, TS * 2);
@@ -1762,12 +1762,24 @@ setupMobileBtn('btn-run', 'run');
 // ============================================================
 //  GAME LOOP
 // ============================================================
+// Cache sky gradient (expensive to recreate 60fps)
+const cachedSkyGrad = ctx.createLinearGradient(0, 0, 0, VH);
+cachedSkyGrad.addColorStop(0, '#4a90d9');
+cachedSkyGrad.addColorStop(0.5, '#6bb3ff');
+cachedSkyGrad.addColorStop(0.85, '#93c5fd');
+cachedSkyGrad.addColorStop(1, '#bfdbfe');
+
 let lastT = 0;
 function loop(time) {
-  const dt = lastT ? Math.min(time - lastT, 33) : 16;
-  lastT = time;
-  update(dt);
-  render();
+  try {
+    const dt = lastT ? Math.min(time - lastT, 33) : 16;
+    lastT = time;
+    update(dt);
+    render();
+  } catch (e) {
+    console.error('Game error:', e);
+    // Recover — don't let a single error kill the game loop
+  }
   requestAnimationFrame(loop);
 }
 
