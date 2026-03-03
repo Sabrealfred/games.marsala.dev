@@ -223,8 +223,8 @@ class Mario {
     this.flagSlide = false; this.flagSlideY = 0; this.flagDone = false;
     this.wasOnGround = true;
   }
-  get hitH() { return this.big ? TS * 2 - 4 : TS - 2; }
-  get hitY() { return this.big ? this.y - TS + 2 : this.y; }
+  get hitH() { return this.big ? 36 : TS - 2; }
+  get hitY() { return this.big ? this.y - 6 : this.y; }
 }
 
 class Goomba {
@@ -427,10 +427,9 @@ function resolveCollisions(ent, isGoomba) {
       ent.onGround = true;
     }
   } else if (ent.vy < 0 && !isGoomba) {
-    const headY = ent.big ? ent.y - TS + 2 : ent.y;
+    const headY = ent.big ? ent.y - 6 : ent.y;
     if (isSolid(left2, headY) || isSolid(right2, headY)) {
-      const alignY = ent.big ? Math.floor(headY / TS) * TS + TS + TS - 2 : Math.floor(headY / TS) * TS + TS;
-      if (ent.big) ent.y = Math.floor(headY / TS) * TS + TS * 2 - 2;
+      if (ent.big) ent.y = Math.floor(headY / TS) * TS + TS + 6;
       else ent.y = Math.floor(headY / TS) * TS + TS;
       ent.vy = 0;
       const htx = Math.floor((ent.x + ent.w / 2) / TS);
@@ -647,8 +646,8 @@ function update(dt) {
     m.vy += GRAVITY;
     resolveEnemy(m);
     // Collect
-    const my = mario.big ? mario.y - TS + 2 : mario.y;
-    const mh = mario.big ? TS * 2 - 4 : mario.h;
+    const my = mario.big ? mario.y - 6 : mario.y;
+    const mh = mario.big ? 36 : mario.h;
     if (overlap(mario.x, my, mario.w, mh, m.x, m.y, m.w, m.h)) {
       m.alive = false;
       if (!mario.big) {
@@ -675,8 +674,8 @@ function update(dt) {
 
     // Mario collision
     if (!mario.dead && mario.invincible <= 0 && !mario.growing && !mario.shrinking) {
-      const my = mario.big ? mario.y - TS + 2 : mario.y;
-      const mh = mario.big ? TS * 2 - 4 : mario.h;
+      const my = mario.big ? mario.y - 6 : mario.y;
+      const mh = mario.big ? 36 : mario.h;
       if (overlap(mario.x + 2, my + 2, mario.w - 4, mh - 4, g.x, g.y, g.w, g.h)) {
         if (mario.vy > 0 && mario.y + mario.h < g.y + g.h / 2 + 6) {
           g.dead = true; g.deadTimer = 20;
@@ -727,8 +726,8 @@ function update(dt) {
 
     // Mario collision
     if (!mario.dead && mario.invincible <= 0 && !mario.growing && !mario.shrinking) {
-      const my = mario.big ? mario.y - TS + 2 : mario.y;
-      const mh = mario.big ? TS * 2 - 4 : mario.h;
+      const my = mario.big ? mario.y - 6 : mario.y;
+      const mh = mario.big ? 36 : mario.h;
       if (overlap(mario.x + 2, my + 2, mario.w - 4, mh - 4, k.x, k.y, k.w, k.h)) {
         if (k.shell && k.shellVx === 0) {
           // Kick shell
@@ -766,8 +765,8 @@ function update(dt) {
 
     if (!mario.dead && mario.invincible <= 0 && !mario.growing && !mario.shrinking) {
       const py = p.y;
-      const my = mario.big ? mario.y - TS + 2 : mario.y;
-      const mh = mario.big ? TS * 2 - 4 : mario.h;
+      const my = mario.big ? mario.y - 6 : mario.y;
+      const mh = mario.big ? 36 : mario.h;
       if (Math.sin(p.phase) > 0.3 && overlap(mario.x + 2, my + 2, mario.w - 4, mh - 4, p.x, py, p.w, p.h)) {
         hurtMario();
       }
