@@ -21,6 +21,11 @@
   to = "/mario/index.html"
   status = 200
 
+[[redirects]]
+  from = "/snake"
+  to = "/snake/index.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

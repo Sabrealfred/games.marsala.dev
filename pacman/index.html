@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pac-Man — Marsala Games</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👾</text></svg>">
   <style>
@@ -17,23 +17,30 @@
       align-items: center;
     }
     .header {
-      width: 100%; max-width: 500px;
-      padding: 20px 16px 8px;
+      width: 100%; max-width: 900px;
+      padding: 16px 20px 6px;
       display: flex; align-items: center; gap: 16px;
     }
     .back-btn { color: #8a87a8; text-decoration: none; font-size: 14px; }
     .back-btn:hover { color: #facc15; }
-    .header h1 { font-size: 22px; color: #facc15; flex: 1; }
+    .header h1 { font-size: 24px; color: #facc15; flex: 1; }
     .hud {
-      width: 100%; max-width: 500px;
-      padding: 4px 16px 8px;
+      width: 100%; max-width: 900px;
+      padding: 4px 20px 8px;
       display: flex; justify-content: space-between;
-      font-size: 14px;
+      font-size: 16px;
     }
     .hud .score { color: #facc15; }
     .hud .level { color: #a5b4fc; }
     .hud .lives { color: #ef4444; letter-spacing: 2px; }
+    .canvas-wrapper {
+      width: 100%;
+      max-width: 900px;
+      padding: 0 12px;
+    }
     canvas {
+      width: 100%;
+      height: auto;
       border: 2px solid #1e3a5f;
       border-radius: 8px;
       image-rendering: pixelated;
@@ -41,17 +48,17 @@
     }
     .mobile-controls {
       display: none;
-      grid-template-columns: repeat(3, 56px);
-      gap: 6px;
-      margin-top: 12px;
+      grid-template-columns: repeat(3, 64px);
+      gap: 8px;
+      margin-top: 16px;
     }
     .mobile-controls button {
-      width: 56px; height: 56px;
+      width: 64px; height: 64px;
       background: #1f2937;
       border: 1px solid #374151;
-      border-radius: 8px;
+      border-radius: 12px;
       color: #e5e7eb;
-      font-size: 22px;
+      font-size: 26px;
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
@@ -59,12 +66,15 @@
     .mobile-controls button:active { background: #374151; }
     .footer-note {
       padding: 16px; text-align: center;
-      font-size: 11px; color: #4b5563; max-width: 500px;
+      font-size: 12px; color: #4b5563; max-width: 900px;
     }
     .footer-note a { color: #6c63ff; text-decoration: none; }
-    @media (max-width: 520px) {
+    @media (max-width: 600px) {
       .mobile-controls { display: grid; }
-      canvas { max-width: calc(100vw - 32px); height: auto; }
+    }
+    @media (max-width: 480px) {
+      .header h1 { font-size: 20px; }
+      .hud { font-size: 13px; }
     }
   </style>
 </head>
@@ -78,7 +88,9 @@
     <span class="level" id="hud-level">LEVEL 1</span>
     <span class="lives" id="hud-lives">♥♥♥</span>
   </div>
-  <canvas id="game" width="448" height="496"></canvas>
+  <div class="canvas-wrapper">
+    <canvas id="game" width="448" height="496"></canvas>
+  </div>
   <div class="mobile-controls">
     <div></div>
     <button ontouchstart="setDir(3)" onclick="setDir(3)">▲</button>
@@ -292,12 +304,10 @@ function loop(time){
     requestAnimationFrame(loop); return;
   }
 
-  // Update pac
   if(canMove(pacX,pacY,pacNext)) pacDir=pacNext;
   if(canMove(pacX,pacY,pacDir)){ pacX+=DX[pacDir]*2; pacY+=DY[pacDir]*2; }
   if(pacX<-T) pacX=W; if(pacX>W) pacX=-T;
 
-  // Eat dots
   const ptx=~~((pacX+T/2)/T),pty=~~((pacY+T/2)/T);
   if(ptx>=0&&ptx<C&&pty>=0&&pty<R){
     const c=maze[pty][ptx];
@@ -310,15 +320,12 @@ function loop(time){
   }
   if(dotsLeft<=0){ state='win'; level++; updateHUD(); setTimeout(()=>{init(); level--; level++; state='playing';},2000); requestAnimationFrame(loop); return; }
 
-  // Fright timer
   if(frightTime>0){ frightTime-=dt; if(frightTime<=0) for(const g of ghosts) if(g.mode==='fright') g.mode=frame%1200<600?'scatter':'chase'; }
   const baseMode=frame%1200<600?'scatter':'chase';
   for(const g of ghosts) if(g.mode!=='fright') g.mode=baseMode;
 
-  // Move ghosts
   for(const g of ghosts) moveGhost(g,dt);
 
-  // Collision
   for(const g of ghosts){
     if(g.home) continue;
     const dx=(pacX+T/2)-(g.x+T/2),dy=(pacY+T/2)-(g.y+T/2);
@@ -338,7 +345,6 @@ function loop(time){
   requestAnimationFrame(loop);
 }
 
-// Input
 window.addEventListener('keydown',e=>{
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)) e.preventDefault();
   if(state==='ready'){ state='playing'; }
@@ -351,7 +357,6 @@ window.addEventListener('keydown',e=>{
   }
 });
 
-// Mobile
 window.setDir=function(d){
   if(state==='ready') state='playing';
   if(state==='over'){ init(); state='playing'; return; }
