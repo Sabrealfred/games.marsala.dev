@@ -570,24 +570,12 @@ function update(dt) {
     return;
   }
 
-  // Growing/shrinking animation (don't freeze everything — keep enemies and camera updating)
-  const isTransforming = mario.growing > 0 || mario.shrinking > 0;
+  // Growing/shrinking is purely visual now — no gameplay pause
   if (mario.growing > 0) mario.growing--;
   if (mario.shrinking > 0) { mario.shrinking--; if (mario.shrinking === 0) mario.invincible = 90; }
 
   // Invincibility
   if (mario.invincible > 0) mario.invincible--;
-
-  // Skip Mario's own movement during grow/shrink but let enemies update
-  if (isTransforming) {
-    // Still update camera
-    camTarget = mario.x - VW / 3;
-    camTarget = Math.max(0, Math.min(camTarget, (LW * TS) - VW));
-    cam += (camTarget - cam) * 0.08;
-    cam = Math.max(0, Math.min(cam, (LW * TS) - VW));
-    updateHUD();
-    return;
-  }
 
   // Movement
   const maxSpd = run ? RUN_SPEED : WALK_SPEED;
@@ -664,7 +652,7 @@ function update(dt) {
     if (overlap(mario.x, my, mario.w, mh, m.x, m.y, m.w, m.h)) {
       m.alive = false;
       if (!mario.big) {
-        mario.big = true; mario.growing = 20;
+        mario.big = true; mario.growing = 12;
         SFX.powerup();
         floatTexts.push(new FloatText(m.x, m.y - 10, '1000', '#22c55e'));
         score += 1000;
@@ -801,7 +789,7 @@ function update(dt) {
 
 function hurtMario() {
   if (mario.big) {
-    mario.big = false; mario.shrinking = 25;
+    mario.big = false; mario.shrinking = 12;
     mario.invincible = 90;
     SFX.powerdown();
   } else {
