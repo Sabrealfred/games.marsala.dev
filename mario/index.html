@@ -820,7 +820,7 @@ function drawMario(mx, my) {
   }
 
   const H = big ? TS * 2 : TS;
-  const baseY = big ? my - TS + 2 : my;
+  const baseY = big ? my - 6 : my;
 
   // Draw growing/shrinking flash
   if (mario.growing > 0 && mario.growing % 4 < 2) { ctx.restore(); return; }
