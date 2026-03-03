@@ -1,0 +1,28 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/chess"
+  to = "/chess/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/pacman"
+  to = "/pacman/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/prince"
+  to = "/prince/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/mario"
+  to = "/mario/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"

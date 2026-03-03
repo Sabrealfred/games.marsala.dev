@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prince of Persia — Marsala Games</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0a0a0a;
+      color: #e8e6f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header {
+      width: 100%;
+      max-width: 720px;
+      padding: 20px 16px 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .back-btn {
+      color: #8a87a8;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    .back-btn:hover { color: #f59e0b; }
+    .header h1 {
+      font-size: 20px;
+      color: #f59e0b;
+      flex: 1;
+    }
+    .controls-bar {
+      width: 100%;
+      max-width: 720px;
+      padding: 0 16px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 11px;
+      color: #6b7280;
+    }
+    .controls-bar kbd {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #d1d5db;
+      font-family: inherit;
+    }
+    .game-wrapper {
+      width: 100%;
+      max-width: 720px;
+      padding: 0 16px;
+    }
+    .game-container {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: #000;
+      border: 2px solid #374151;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    .game-container .jsdos {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 10;
+      transition: opacity 0.5s;
+    }
+    .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid #374151;
+      border-top-color: #f59e0b;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: #f59e0b; font-size: 14px; }
+    .loading-sub { color: #6b7280; font-size: 12px; margin-top: 8px; }
+    .error-box {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 10;
+      padding: 24px;
+      text-align: center;
+    }
+    .error-box.hidden { display: none; }
+    .error-box p { color: #ef4444; margin-bottom: 16px; font-size: 14px; }
+    .error-box button {
+      background: #1f2937;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .error-box button:hover { background: #374151; }
+    .footer-note {
+      max-width: 720px;
+      padding: 16px;
+      text-align: center;
+      font-size: 11px;
+      color: #4b5563;
+      line-height: 1.6;
+    }
+    .footer-note a { color: #6c63ff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="/" class="back-btn">← Back</a>
+    <h1>Prince of Persia (1989)</h1>
+  </div>
+
+  <div class="controls-bar">
+    <span><kbd>←</kbd><kbd>→</kbd> Move</span>
+    <span><kbd>↑</kbd> Jump / Climb</span>
+    <span><kbd>↓</kbd> Crouch / Descend</span>
+    <span><kbd>Shift</kbd> Walk carefully</span>
+    <span><kbd>Space</kbd> Combat / Action</span>
+  </div>
+
+  <div class="game-wrapper">
+    <div class="game-container" id="game-container">
+      <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading Prince of Persia...</div>
+        <div class="loading-sub">Initializing DOS emulator (WebAssembly)</div>
+      </div>
+      <div class="error-box hidden" id="error">
+        <p id="error-msg">Failed to load the emulator.</p>
+        <button onclick="location.reload()">Retry</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Prince of Persia &copy; 1989 Jordan Mechner / Brøderbund Software. Running via
+    <a href="https://js-dos.com" target="_blank" rel="noopener">js-dos</a> WebAssembly emulator.
+    Click inside the game to capture keyboard input.
+    <br><a href="/">← Marsala Games</a>
+  </div>
+
+  <script>
+    (function() {
+      const container = document.getElementById('game-container');
+      const loading = document.getElementById('loading');
+      const errorBox = document.getElementById('error');
+      const errorMsg = document.getElementById('error-msg');
+
+      // Load js-dos CSS
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://v8.js-dos.com/latest/js-dos.css';
+      document.head.appendChild(link);
+
+      // Load js-dos script
+      const script = document.createElement('script');
+      script.src = 'https://v8.js-dos.com/latest/js-dos.js';
+      script.async = true;
+
+      script.onload = function() {
+        try {
+          const Dos = window.Dos;
+          if (!Dos) throw new Error('js-dos failed to initialize');
+
+          loading.classList.add('hidden');
+          Dos(container, {
+            url: 'https://cdn.dos.zone/original/2X/2/24b00388-prince-of-persia.jsdos',
+            autoStart: true,
+          });
+        } catch (e) {
+          showError('Emulator failed to initialize: ' + e.message);
+        }
+      };
+
+      script.onerror = function() {
+        showError('Failed to load DOS emulator. Check your internet connection.');
+      };
+
+      document.head.appendChild(script);
+
+      function showError(msg) {
+        loading.classList.add('hidden');
+        errorMsg.textContent = msg;
+        errorBox.classList.remove('hidden');
+      }
+    })();
+  </script>
+</body>
+</html>
