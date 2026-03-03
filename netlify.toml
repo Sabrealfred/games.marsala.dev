@@ -36,3 +36,10 @@
   [headers.values]
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
+
+# Serve .jsdos bundles with correct MIME type (they are ZIP archives)
+[[headers]]
+  for = "/*.jsdos"
+  [headers.values]
+    Content-Type = "application/zip"
+    Cache-Control = "public, max-age=31536000, immutable"

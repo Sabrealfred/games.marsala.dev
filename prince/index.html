@@ -4,8 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Prince of Persia — Marsala Games</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2694;&#xFE0F;</text></svg>">
+
+  <!-- js-dos v8 stylesheet -->
   <link rel="stylesheet" href="https://v8.js-dos.com/latest/js-dos.css">
+
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; overflow: hidden; }
@@ -18,525 +21,758 @@
       background:
         repeating-conic-gradient(rgba(255,255,255,.012) 0% 25%, transparent 0% 50%) 0 0 / 40px 40px,
         repeating-conic-gradient(rgba(0,0,0,.06) 0% 25%, transparent 0% 50%) 20px 20px / 40px 40px,
-        linear-gradient(160deg, #1a1520 0%, #0d0a10 40%, #12101a 100%);
-      background-color: #0d0a10;
+        linear-gradient(170deg, #12100e 0%, #1a1510 30%, #0f0d0b 60%, #16130f 100%);
+      background-color: #0e0c0a;
     }
 
-    /* Top bar */
-    .top-bar {
+    .header {
+      padding: 10px 20px 6px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 8px 16px;
-      background: rgba(0,0,0,.6);
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      z-index: 100;
+      gap: 14px;
       flex-shrink: 0;
+      border-bottom: 1px solid rgba(245,158,11,.12);
     }
-    .back-link {
-      color: rgba(255,255,255,.5);
+    .back-btn {
+      color: #8a87a8;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 14px;
       transition: color .2s;
     }
-    .back-link:hover { color: #fff; }
-    .title-text {
-      font-size: 14px;
-      font-weight: bold;
-      color: rgba(255,255,255,.7);
-      letter-spacing: 2px;
-      text-transform: uppercase;
+    .back-btn:hover { color: #f59e0b; }
+    .header h1 {
+      font-size: 20px;
+      color: #f59e0b;
+      flex: 1;
+      text-shadow: 0 0 20px rgba(245,158,11,.25);
+      letter-spacing: .5px;
     }
-    .controls-hint {
-      font-size: 11px;
-      color: rgba(255,255,255,.3);
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+    .icon-btn {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(245,158,11,.2);
+      color: #d1d5db;
+      width: 34px; height: 34px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+      font-size: 16px;
     }
+    .icon-btn:hover {
+      background: rgba(245,158,11,.15);
+      border-color: #f59e0b;
+      color: #f59e0b;
+    }
+    .icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
-    /* Game container */
+    .game-wrapper {
+      flex: 1;
+      padding: 8px 10px 6px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
     #game-container {
       flex: 1;
-      position: relative;
+      background: #000;
+      border: 2px solid rgba(245,158,11,.2);
+      border-radius: 8px;
       overflow: hidden;
+      position: relative;
+      min-height: 200px;
     }
-    .jsdos {
+
+    /* js-dos v8 injects its own DOM. Force it to fill our container. */
+    #game-container .jsdos {
+      width: 100% !important;
+      height: 100% !important;
+      position: absolute !important;
+      inset: 0 !important;
+    }
+    #game-container .jsdos-player-region,
+    #game-container .jsdos-player {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    #game-container .jsdos-sidebar,
+    #game-container .jsdos-sidebar-header {
+      display: none !important;
+    }
+    #game-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain;
+    }
+    #game-container .emulator-mouse-overlay {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    /* Also handle the generic div wrapper js-dos v8 creates */
+    #game-container > div:not(.loading-overlay):not(.controls-overlay):not(.error-box) {
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* Loading overlay */
-    #loading-overlay {
+    .loading-overlay {
       position: absolute;
       inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      background: radial-gradient(ellipse at center, #1a1510 0%, #000 80%);
       z-index: 50;
-      background: rgba(13,10,16,.95);
-      transition: opacity .8s;
+      transition: opacity .6s ease;
+      gap: 8px;
     }
-    #loading-overlay.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    .loading-overlay.hidden { opacity: 0; pointer-events: none; }
 
-    /* Hourglass animation */
-    .hourglass-wrap {
-      width: 80px;
-      height: 120px;
-      margin-bottom: 30px;
-      position: relative;
+    .hourglass-anim {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 12px;
+      animation: hourglassRotate 2.4s ease-in-out infinite;
     }
-    .hourglass-wrap svg {
-      width: 100%;
-      height: 100%;
-      filter: drop-shadow(0 0 12px rgba(218,165,32,.4));
+    @keyframes hourglassRotate {
+      0% { transform: rotate(0deg); }
+      40% { transform: rotate(0deg); }
+      50% { transform: rotate(180deg); }
+      90% { transform: rotate(180deg); }
+      100% { transform: rotate(360deg); }
     }
-    .sand-top {
-      animation: sandDrain 2.5s ease-in-out infinite;
-      transform-origin: center bottom;
-    }
-    .sand-bottom {
-      animation: sandFill 2.5s ease-in-out infinite;
-      transform-origin: center top;
-    }
-    .sand-stream {
-      animation: streamPulse 2.5s ease-in-out infinite;
+    .hourglass-anim .sand-top {
+      animation: sandDrain 2.4s ease-in-out infinite;
+      transform-origin: center;
     }
     @keyframes sandDrain {
-      0% { transform: scaleY(1); }
-      90% { transform: scaleY(0); }
-      100% { transform: scaleY(1); }
+      0%   { opacity: 1; }
+      45%  { opacity: 0; }
+      55%  { opacity: 1; }
+      100% { opacity: 1; }
+    }
+    .hourglass-anim .sand-bottom {
+      animation: sandFill 2.4s ease-in-out infinite;
+      transform-origin: center;
     }
     @keyframes sandFill {
-      0% { transform: scaleY(0); }
-      90% { transform: scaleY(1); }
-      100% { transform: scaleY(0); }
+      0%   { opacity: 0; }
+      45%  { opacity: 1; }
+      55%  { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    .hourglass-anim .sand-stream {
+      animation: streamPulse 2.4s ease-in-out infinite;
     }
     @keyframes streamPulse {
-      0%,90%,100% { opacity: 1; }
-      92% { opacity: 0; }
+      0%   { opacity: 0; }
+      10%  { opacity: 1; }
+      40%  { opacity: 1; }
+      50%  { opacity: 0; }
+      100% { opacity: 0; }
     }
 
     .loading-title {
-      font-size: 22px;
+      color: #f59e0b;
+      font-size: 18px;
       font-weight: bold;
-      color: #daa520;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      text-shadow: 0 0 20px rgba(218,165,32,.5);
-      margin-bottom: 16px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 12px rgba(245,158,11,.3);
     }
-    .loading-status {
+    .loading-sub {
+      color: #6b7280;
       font-size: 13px;
-      color: rgba(255,255,255,.5);
-      margin-bottom: 24px;
+      min-height: 1.2em;
     }
 
-    /* Progress bar */
-    .progress-wrap {
-      width: 260px;
-      height: 4px;
+    .progress-container {
+      width: 220px;
+      height: 6px;
       background: rgba(255,255,255,.08);
-      border-radius: 2px;
+      border-radius: 3px;
       overflow: hidden;
-      margin-bottom: 30px;
+      margin-top: 12px;
+      border: 1px solid rgba(245,158,11,.15);
     }
-    .progress-fill {
+    .progress-bar {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #daa520, #f0e68c);
-      border-radius: 2px;
-      transition: width .3s;
+      background: linear-gradient(90deg, #b45309, #f59e0b, #fbbf24);
+      border-radius: 3px;
+      transition: width .4s ease;
+      box-shadow: 0 0 8px rgba(245,158,11,.4);
     }
 
-    /* Tips */
     .loading-tip {
+      margin-top: 20px;
+      padding: 10px 18px;
+      background: rgba(245,158,11,.06);
+      border: 1px solid rgba(245,158,11,.12);
+      border-radius: 6px;
       font-size: 12px;
-      color: rgba(255,255,255,.35);
-      font-style: italic;
-      max-width: 320px;
+      color: #a8a29e;
+      max-width: 340px;
       text-align: center;
       line-height: 1.5;
-      animation: tipFade 4s ease-in-out infinite;
+      opacity: 0;
+      animation: tipFadeIn .5s ease forwards .8s;
     }
-    @keyframes tipFade {
-      0%,100% { opacity: .4; }
-      50% { opacity: .8; }
-    }
+    .loading-tip strong { color: #f59e0b; }
+    @keyframes tipFadeIn { to { opacity: 1; } }
 
-    /* Error state */
-    #error-overlay {
+    .controls-overlay {
       position: absolute;
       inset: 0;
-      display: none;
+      display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 60;
-      background: rgba(13,10,16,.97);
-    }
-    #error-overlay.show { display: flex; }
-    .error-icon { font-size: 48px; margin-bottom: 20px; }
-    .error-title { font-size: 20px; color: #e74c3c; margin-bottom: 12px; font-weight: bold; }
-    .error-msg { font-size: 13px; color: rgba(255,255,255,.5); max-width: 400px; text-align: center; line-height: 1.6; margin-bottom: 20px; }
-    .retry-btn {
-      padding: 10px 28px;
-      background: rgba(218,165,32,.15);
-      border: 1px solid rgba(218,165,32,.4);
-      color: #daa520;
-      font-family: inherit;
-      font-size: 14px;
+      background: rgba(0,0,0,.92);
+      z-index: 40;
       cursor: pointer;
-      border-radius: 4px;
-      transition: all .2s;
+      transition: opacity .5s ease;
+      padding: 20px;
     }
-    .retry-btn:hover { background: rgba(218,165,32,.25); border-color: #daa520; }
+    .controls-overlay.hidden { opacity: 0; pointer-events: none; }
 
-    /* Controls overlay (first visit) */
-    #controls-overlay {
-      position: absolute;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 55;
-      background: rgba(13,10,16,.92);
-      cursor: pointer;
+    .controls-title {
+      font-size: 26px;
+      color: #f59e0b;
+      margin-bottom: 6px;
+      text-shadow: 0 0 20px rgba(245,158,11,.4);
+      letter-spacing: 2px;
     }
-    #controls-overlay.show { display: flex; }
-    .controls-card {
-      background: rgba(30,25,40,.9);
-      border: 1px solid rgba(218,165,32,.2);
-      border-radius: 8px;
-      padding: 32px 40px;
-      text-align: center;
-      max-width: 400px;
-    }
-    .controls-card h3 {
-      color: #daa520;
-      font-size: 18px;
-      letter-spacing: 3px;
-      margin-bottom: 20px;
+    .controls-subtitle {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 24px;
       text-transform: uppercase;
+      letter-spacing: 3px;
     }
-    .key-grid {
+
+    .controls-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px 24px;
-      margin-bottom: 20px;
+      gap: 12px 28px;
+      margin-bottom: 28px;
+      max-width: 420px;
     }
-    .key-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-    }
-    .key-cap {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 36px;
-      height: 28px;
-      padding: 0 8px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.15);
-      border-radius: 4px;
-      font-size: 11px;
-      color: #daa520;
+    .control-item { display: flex; align-items: center; gap: 10px; }
+    .control-key {
+      background: #1f2937;
+      border: 1px solid rgba(245,158,11,.25);
+      border-bottom: 3px solid rgba(245,158,11,.3);
+      border-radius: 5px;
+      padding: 5px 10px;
+      color: #fbbf24;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
       font-weight: bold;
-      letter-spacing: 1px;
+      min-width: 36px;
+      text-align: center;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0,0,0,.4);
     }
-    .key-label { color: rgba(255,255,255,.6); }
-    .dismiss-hint {
-      font-size: 11px;
-      color: rgba(255,255,255,.25);
+    .control-label { color: #d1d5db; font-size: 13px; }
+
+    .controls-play-prompt {
       margin-top: 8px;
+      font-size: 16px;
+      color: #f59e0b;
+      animation: promptPulse 2s ease-in-out infinite;
+    }
+    @keyframes promptPulse {
+      0%, 100% { opacity: .6; }
+      50% { opacity: 1; }
     }
 
-    /* Fullscreen button */
-    .fs-btn {
+    .controls-note {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #4b5563;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .error-box {
       position: absolute;
-      bottom: 16px;
-      right: 16px;
-      z-index: 40;
-      width: 40px;
-      height: 40px;
-      border-radius: 6px;
-      background: rgba(0,0,0,.5);
-      border: 1px solid rgba(255,255,255,.1);
-      color: rgba(255,255,255,.5);
-      cursor: pointer;
+      inset: 0;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      background: radial-gradient(ellipse at center, #1a0a0a 0%, #000 80%);
+      z-index: 60;
+      padding: 24px;
+      text-align: center;
+    }
+    .error-box.hidden { display: none; }
+    .error-icon { font-size: 40px; margin-bottom: 14px; }
+    .error-box p { color: #ef4444; margin-bottom: 8px; font-size: 15px; max-width: 400px; }
+    .error-box .error-detail { color: #6b7280; font-size: 12px; margin-bottom: 18px; }
+    .error-box button {
+      background: rgba(245,158,11,.12);
+      color: #f59e0b;
+      border: 1px solid rgba(245,158,11,.3);
+      padding: 10px 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
       transition: all .2s;
     }
-    .fs-btn:hover { background: rgba(0,0,0,.7); color: #fff; border-color: rgba(255,255,255,.3); }
-    .fs-btn svg { width: 18px; height: 18px; }
+    .error-box button:hover {
+      background: rgba(245,158,11,.2);
+      border-color: #f59e0b;
+    }
+
+    .footer-bar {
+      padding: 6px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 11px;
+      color: #4b5563;
+      flex-shrink: 0;
+      border-top: 1px solid rgba(245,158,11,.06);
+    }
+    .footer-bar a { color: #78716c; text-decoration: none; transition: color .2s; }
+    .footer-bar a:hover { color: #f59e0b; }
+    .footer-bar .sep { color: #374151; }
+    .save-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(245,158,11,.06);
+      border: 1px solid rgba(245,158,11,.1);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 10px;
+      color: #78716c;
+    }
+    .save-badge svg { width: 10px; height: 10px; fill: #78716c; }
+
+    .touch-hint {
+      display: none;
+      text-align: center;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: #6b7280;
+      flex-shrink: 0;
+    }
+    @media (hover: none) and (pointer: coarse) {
+      .touch-hint { display: block; }
+    }
 
     @media (max-width: 600px) {
-      .top-bar { padding: 6px 10px; }
-      .title-text { font-size: 12px; letter-spacing: 1px; }
-      .controls-hint { display: none; }
-      .controls-card { margin: 16px; padding: 24px 20px; }
-      .key-grid { grid-template-columns: 1fr; }
+      .header { padding: 8px 12px 4px; gap: 10px; }
+      .header h1 { font-size: 16px; }
+      .game-wrapper { padding: 4px 4px 4px; }
+      #game-container { border-radius: 4px; border-width: 1px; }
+      .controls-grid { grid-template-columns: 1fr; gap: 8px; }
+      .controls-title { font-size: 20px; }
+      .footer-bar { padding: 4px 10px; font-size: 10px; gap: 6px; }
+      .loading-tip { max-width: 280px; font-size: 11px; }
+    }
+
+    :fullscreen #game-container,
+    :-webkit-full-screen #game-container {
+      border: none;
+      border-radius: 0;
     }
   </style>
 </head>
 <body>
-  <div class="top-bar">
-    <a href="https://games.marsala.dev/" class="back-link">← Back to Arcade</a>
-    <span class="title-text">Prince of Persia</span>
-    <span class="controls-hint">Arrow Keys · Shift = Grab/Fight · Space = Show Time</span>
+
+  <div class="header">
+    <a href="/" class="back-btn">&#8592; Back</a>
+    <h1>Prince of Persia <span style="font-size:13px;color:#6b7280;font-weight:normal">(1989)</span></h1>
+    <div class="header-actions">
+      <button class="icon-btn" id="btn-fullscreen" title="Fullscreen (F11)">
+        <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+      </button>
+    </div>
   </div>
 
-  <div id="game-container">
-    <!-- Loading overlay -->
-    <div id="loading-overlay">
-      <div class="hourglass-wrap">
-        <svg viewBox="0 0 60 90" fill="none">
-          <!-- Frame -->
-          <rect x="8" y="2" width="44" height="4" rx="1" fill="#daa520" opacity=".7"/>
-          <rect x="8" y="84" width="44" height="4" rx="1" fill="#daa520" opacity=".7"/>
-          <line x1="14" y1="6" x2="18" y2="44" stroke="#daa520" stroke-width="2" opacity=".5"/>
-          <line x1="46" y1="6" x2="42" y2="44" stroke="#daa520" stroke-width="2" opacity=".5"/>
-          <line x1="18" y1="46" x2="14" y2="84" stroke="#daa520" stroke-width="2" opacity=".5"/>
-          <line x1="42" y1="46" x2="46" y2="84" stroke="#daa520" stroke-width="2" opacity=".5"/>
-          <!-- Sand top -->
-          <polygon class="sand-top" points="20,10 40,10 31,40 29,40" fill="#daa520" opacity=".6"/>
-          <!-- Sand stream -->
-          <rect class="sand-stream" x="29" y="40" width="2" height="10" fill="#daa520" opacity=".4"/>
-          <!-- Sand bottom -->
-          <polygon class="sand-bottom" points="18,80 42,80 33,52 27,52" fill="#daa520" opacity=".6"/>
+  <div class="touch-hint">
+    Tap the game area for on-screen controls. js-dos provides built-in touch input.
+  </div>
+
+  <div class="game-wrapper">
+    <div id="game-container">
+
+      <div class="loading-overlay" id="loading">
+        <svg class="hourglass-anim" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="12" y="4" width="40" height="4" rx="1" fill="#f59e0b"/>
+          <rect x="12" y="56" width="40" height="4" rx="1" fill="#f59e0b"/>
+          <path d="M18 8 L32 30 L46 8" stroke="#b45309" stroke-width="2" fill="none"/>
+          <path d="M18 56 L32 34 L46 56" stroke="#b45309" stroke-width="2" fill="none"/>
+          <polygon class="sand-top" points="22,12 42,12 32,26" fill="#fbbf24" opacity=".7"/>
+          <line class="sand-stream" x1="32" y1="26" x2="32" y2="38" stroke="#fbbf24" stroke-width="2" opacity="0"/>
+          <polygon class="sand-bottom" points="24,52 40,52 32,40" fill="#fbbf24" opacity="0"/>
         </svg>
-      </div>
-      <div class="loading-title">Prince of Persia</div>
-      <div class="loading-status" id="loading-status">Initializing emulator...</div>
-      <div class="progress-wrap">
-        <div class="progress-fill" id="progress-fill"></div>
-      </div>
-      <div class="loading-tip" id="loading-tip">The original Prince of Persia was created by Jordan Mechner in 1989</div>
-    </div>
 
-    <!-- Error overlay -->
-    <div id="error-overlay">
-      <div class="error-icon">⚔️</div>
-      <div class="error-title">Failed to Load</div>
-      <div class="error-msg" id="error-msg">The DOS emulator could not start. This may be due to network issues or browser compatibility.</div>
-      <button class="retry-btn" onclick="location.reload()">Try Again</button>
-    </div>
+        <div class="loading-title">Prince of Persia</div>
+        <div class="loading-sub" id="loading-status">Initializing DOS emulator...</div>
 
-    <!-- Controls overlay (first visit) -->
-    <div id="controls-overlay">
-      <div class="controls-card">
-        <h3>⚔️ Controls</h3>
-        <div class="key-grid">
-          <div class="key-item"><span class="key-cap">←→</span><span class="key-label">Move</span></div>
-          <div class="key-item"><span class="key-cap">↑</span><span class="key-label">Jump / Climb</span></div>
-          <div class="key-item"><span class="key-cap">↓</span><span class="key-label">Crouch / Descend</span></div>
-          <div class="key-item"><span class="key-cap">SHIFT</span><span class="key-label">Grab Ledge / Fight</span></div>
-          <div class="key-item"><span class="key-cap">SPACE</span><span class="key-label">Show Remaining Time</span></div>
-          <div class="key-item"><span class="key-cap">ESC</span><span class="key-label">Restart Level</span></div>
-          <div class="key-item"><span class="key-cap">CTRL+G</span><span class="key-label">Save Game</span></div>
-          <div class="key-item"><span class="key-cap">CTRL+L</span><span class="key-label">Load Game</span></div>
+        <div class="progress-container">
+          <div class="progress-bar" id="progress-bar"></div>
         </div>
-        <div class="dismiss-hint">Click anywhere to start playing</div>
-      </div>
-    </div>
 
-    <!-- Fullscreen button -->
-    <button class="fs-btn" id="fs-btn" title="Fullscreen">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/>
-      </svg>
-    </button>
+        <div class="loading-tip" id="loading-tip">
+          <strong>Tip:</strong> Use <strong>Shift</strong> to walk carefully near edges &mdash; one wrong step and the Prince falls!
+        </div>
+      </div>
+
+      <div class="controls-overlay hidden" id="controls-overlay">
+        <div class="controls-title">&#9876; Prince of Persia</div>
+        <div class="controls-subtitle">Keyboard Controls</div>
+
+        <div class="controls-grid">
+          <div class="control-item">
+            <span class="control-key">&#8592; &#8594;</span>
+            <span class="control-label">Run left / right</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">&#8593;</span>
+            <span class="control-label">Jump / Climb up</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">&#8595;</span>
+            <span class="control-label">Crouch / Climb down</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">Shift</span>
+            <span class="control-label">Walk carefully</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">Space</span>
+            <span class="control-label">Combat / Block</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">Shift+&#8593;</span>
+            <span class="control-label">Standing jump</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">Ctrl+G</span>
+            <span class="control-label">Save game</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">Ctrl+L</span>
+            <span class="control-label">Load game</span>
+          </div>
+        </div>
+
+        <div class="controls-play-prompt">&#9654; Click anywhere to play</div>
+        <div class="controls-note">
+          The hourglass is ticking &mdash; you have 60 minutes to rescue the Princess.<br>
+          js-dos can save your progress between sessions.
+        </div>
+      </div>
+
+      <div class="error-box hidden" id="error">
+        <div class="error-icon">&#9888;</div>
+        <p id="error-msg">Failed to load the emulator.</p>
+        <div class="error-detail" id="error-detail">Check your connection and try again.</div>
+        <button onclick="retryLoad()">&#8635; Retry</button>
+      </div>
+
+    </div>
   </div>
 
-  <script src="https://v8.js-dos.com/latest/js-dos.js"></script>
+  <div class="footer-bar">
+    <span>Prince of Persia &copy; 1989 Jordan Mechner / Br&oslash;derbund</span>
+    <span class="sep">|</span>
+    <span>Emulated via <a href="https://js-dos.com" target="_blank" rel="noopener">js-dos</a> (WASM)</span>
+    <span class="sep">|</span>
+    <span class="save-badge">
+      <svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4zm-5 16a3 3 0 110-6 3 3 0 010 6zm3-10H5V5h10v4z"/></svg>
+      Save states supported
+    </span>
+    <span class="sep">|</span>
+    <a href="/">&#8592; Marsala Games</a>
+  </div>
+
   <script>
-    const tips = [
-      "The original Prince of Persia was created by Jordan Mechner in 1989",
-      "Mechner used rotoscoping to create the fluid character animations",
-      "You have 60 minutes of game time to rescue the Princess",
-      "Hold Shift near ledges to grab them and prevent falling",
-      "Careful steps: tap the arrow key briefly to walk slowly past traps",
-      "The game was inspired by the 1001 Nights tales",
-      "In sword fights, advance and strike — then retreat to parry"
+  (function() {
+    'use strict';
+
+    // -- Config --
+    // Local .jsdos bundle (primary), js-dos.com CDN ZIP (fallback)
+    var GAME_URLS = [
+      'prince-of-persia.jsdos',
+      'https://js-dos.com/cdn/upload/Prince%20of%20Persia-notBroderbund.zip'
     ];
+    var JSDOS_SCRIPTS = [
+      'https://v8.js-dos.com/latest/js-dos.js'
+    ];
+    var LOADING_FALLBACK_MS = 12000;
+    var LOAD_TIMEOUT_MS = 45000;
+    var MAX_RETRIES = 3;
 
-    const loadingStatus = document.getElementById('loading-status');
-    const progressFill = document.getElementById('progress-fill');
-    const loadingTip = document.getElementById('loading-tip');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const errorOverlay = document.getElementById('error-overlay');
-    const errorMsg = document.getElementById('error-msg');
-    const controlsOverlay = document.getElementById('controls-overlay');
-    const gameContainer = document.getElementById('game-container');
+    // -- DOM refs --
+    var container    = document.getElementById('game-container');
+    var loading      = document.getElementById('loading');
+    var statusEl     = document.getElementById('loading-status');
+    var progressBar  = document.getElementById('progress-bar');
+    var tipEl        = document.getElementById('loading-tip');
+    var controlsOv   = document.getElementById('controls-overlay');
+    var errorBox     = document.getElementById('error');
+    var errorMsg     = document.getElementById('error-msg');
+    var errorDetail  = document.getElementById('error-detail');
+    var fsBtn        = document.getElementById('btn-fullscreen');
 
-    // Rotate tips
-    let tipIdx = 0;
-    const tipInterval = setInterval(() => {
-      tipIdx = (tipIdx + 1) % tips.length;
-      loadingTip.textContent = tips[tipIdx];
-    }, 4000);
+    var retryCount = 0;
+    var loadTimer  = null;
+    var progressVal = 0;
+    var progressInterval = null;
+    var gameUrlIndex = 0;
+    var emulatorReady = false;
+    var tipRotation = null;
+    var canvasCheck = null;
 
-    // Simulate progress
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-      if (progress < 85) {
-        progress += Math.random() * 8 + 2;
-        if (progress > 85) progress = 85;
-        progressFill.style.width = progress + '%';
-      }
-    }, 500);
+    // -- Tips --
+    var tips = [
+      'Use <strong>Shift</strong> to walk carefully near edges &mdash; one wrong step and the Prince falls!',
+      'Press <strong>Space</strong> to draw your sword when enemies appear.',
+      'You have <strong>60 minutes</strong> to rescue the Princess. The clock starts at Level 1.',
+      'Look for loose floor tiles &mdash; they can open secret passages.',
+      'Press <strong>Shift + Arrow</strong> to take one step at a time on narrow ledges.',
+      'The <strong>mirror</strong> on Level 4 creates your shadow self. Do not fight him!',
+      'Potions can heal you, but some are <strong>poisoned</strong>. Choose wisely.',
+    ];
+    var currentTip = 0;
 
-    function setStatus(text) {
-      loadingStatus.textContent = text;
+    function rotateTip() {
+      currentTip = (currentTip + 1) % tips.length;
+      tipEl.innerHTML = '<strong>Tip:</strong> ' + tips[currentTip];
     }
 
-    function showError(msg) {
-      clearInterval(tipInterval);
+    function startProgress() {
+      progressVal = 0;
+      progressBar.style.width = '0%';
+      if (progressInterval) clearInterval(progressInterval);
+      progressInterval = setInterval(function() {
+        if (progressVal < 65) {
+          progressVal += Math.random() * 8 + 2;
+        } else if (progressVal < 90) {
+          progressVal += Math.random() * 2 + 0.5;
+        }
+        progressVal = Math.min(progressVal, 92);
+        progressBar.style.width = progressVal + '%';
+      }, 300);
+    }
+
+    function completeProgress() {
       clearInterval(progressInterval);
-      loadingOverlay.classList.add('hidden');
-      errorMsg.textContent = msg;
-      errorOverlay.classList.add('show');
+      progressInterval = null;
+      progressVal = 100;
+      progressBar.style.width = '100%';
+    }
+
+    function setStatus(msg) {
+      if (statusEl) statusEl.textContent = msg;
+    }
+
+    function cleanupTimers() {
+      if (progressInterval) clearInterval(progressInterval);
+      if (tipRotation) clearInterval(tipRotation);
+      if (canvasCheck) clearInterval(canvasCheck);
+      clearTimeout(loadTimer);
     }
 
     function hideLoading() {
-      clearInterval(tipInterval);
-      clearInterval(progressInterval);
-      progressFill.style.width = '100%';
-      setStatus('Ready!');
-      setTimeout(() => {
-        loadingOverlay.classList.add('hidden');
-        // Show controls on first visit
-        if (!localStorage.getItem('prince_controls_seen')) {
-          controlsOverlay.classList.add('show');
+      if (emulatorReady) return;
+      emulatorReady = true;
+      completeProgress();
+      cleanupTimers();
+      setTimeout(function() {
+        loading.classList.add('hidden');
+        if (!localStorage.getItem('pop_controls_seen')) {
+          controlsOv.classList.remove('hidden');
         }
-      }, 600);
+      }, 400);
     }
 
-    // Dismiss controls overlay
-    controlsOverlay.addEventListener('click', () => {
-      controlsOverlay.classList.remove('show');
-      localStorage.setItem('prince_controls_seen', '1');
+    function showError(msg, detail) {
+      cleanupTimers();
+      loading.classList.add('hidden');
+      errorMsg.textContent = msg || 'Failed to load the emulator.';
+      errorDetail.textContent = detail || 'Check your internet connection and try again.';
+      errorBox.classList.remove('hidden');
+    }
+
+    // Controls overlay dismiss
+    controlsOv.addEventListener('click', function() {
+      controlsOv.classList.add('hidden');
+      localStorage.setItem('pop_controls_seen', '1');
     });
 
     // Fullscreen
-    document.getElementById('fs-btn').addEventListener('click', () => {
-      const el = gameContainer;
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else if (el.requestFullscreen) {
-        el.requestFullscreen();
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
+    fsBtn.addEventListener('click', function() {
+      if (!document.fullscreenElement) {
+        var fn = container.requestFullscreen || container.webkitRequestFullscreen || container.msRequestFullscreen;
+        if (fn) fn.call(container).catch(function() {});
+      } else {
+        var efn = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+        if (efn) efn.call(document);
+      }
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'F11') {
+        e.preventDefault();
+        fsBtn.click();
       }
     });
 
-    // Game bundle URLs to try (in order)
-    const BUNDLE_URLS = [
-      "prince-of-persia.jsdos",
-      "https://js-dos.com/cdn/upload/Prince of Persia-notBroderbund.zip",
-      "https://cdn.dos.zone/original/2X/2/24b00388-prince-of-persia.jsdos"
-    ];
+    // Script loader
+    function loadScript(url) {
+      return new Promise(function(resolve, reject) {
+        var s = document.createElement('script');
+        s.src = url;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
 
-    let loadAttempt = 0;
+    function loadJsDos(index) {
+      index = index || 0;
+      if (index >= JSDOS_SCRIPTS.length) {
+        return Promise.reject(new Error('All js-dos CDN sources failed.'));
+      }
+      setStatus('Loading emulator (' + (index + 1) + '/' + JSDOS_SCRIPTS.length + ')...');
+      return loadScript(JSDOS_SCRIPTS[index]).catch(function() {
+        return loadJsDos(index + 1);
+      });
+    }
 
-    async function initGame() {
-      setStatus('Loading DOS emulator...');
-
-      // Check that Dos function exists
-      if (typeof Dos === 'undefined') {
-        showError('Failed to load the js-dos emulator script. Please check your internet connection and try again.');
+    // Start the emulator
+    function startEmulator() {
+      if (!window.Dos) {
+        showError(
+          'js-dos library did not load.',
+          'The emulator script could not be downloaded. Try refreshing or disabling ad-blockers.'
+        );
         return;
       }
 
-      const url = BUNDLE_URLS[loadAttempt];
-      setStatus('Downloading Prince of Persia (' + (loadAttempt + 1) + '/' + BUNDLE_URLS.length + ')...');
+      var gameUrl = GAME_URLS[gameUrlIndex];
+      setStatus('Loading Prince of Persia...');
+      progressVal = Math.max(progressVal, 40);
 
       try {
-        const instance = Dos(gameContainer, {
-          url: url,
+        // js-dos v8 API: Dos(element, options)
+        // Events: 'emu-ready', 'ci-ready', 'bnd-play'
+        Dos(container, {
+          url: gameUrl,
           autoStart: true,
-          kiosk: false,
-          onEvent: (event, ci) => {
-            if (event === 'emu-ready') {
-              progress = 100;
+          onEvent: function(event) {
+            if (event === 'emu-ready' || event === 'ci-ready' || event === 'bnd-play') {
               hideLoading();
-            }
-            if (event === 'bnd-play') {
-              setStatus('Starting game...');
-              progress = 90;
-              progressFill.style.width = '90%';
             }
           }
         });
-
-        // Timeout fallback: if emu-ready doesn't fire in 30s, hide loading anyway
-        setTimeout(() => {
-          if (!loadingOverlay.classList.contains('hidden') && !errorOverlay.classList.contains('show')) {
-            // Check if the game container has canvas children (emulator rendered something)
-            const canvases = gameContainer.querySelectorAll('canvas');
-            if (canvases.length > 0) {
-              hideLoading();
-            } else {
-              // Try next URL
-              loadAttempt++;
-              if (loadAttempt < BUNDLE_URLS.length) {
-                setStatus('Trying alternative source...');
-                progress = 20;
-                progressFill.style.width = '20%';
-                // Reload page with different attempt would be complex, show soft retry
-                showError('The game is taking too long to load. The DOS emulator may not be compatible with your browser. Try using Chrome or Edge.');
-              } else {
-                showError('Could not load Prince of Persia. The game bundle may be temporarily unavailable. Please try again later.');
-              }
-            }
-          }
-        }, 30000);
-
-        // Shorter fallback: if we at least see the js-dos UI, count as success
-        setTimeout(() => {
-          const jsdosFrames = gameContainer.querySelectorAll('.jsdos, iframe, canvas');
-          if (jsdosFrames.length > 0 && !loadingOverlay.classList.contains('hidden')) {
-            setStatus('Emulator loaded — starting game...');
-            progress = 80;
-            progressFill.style.width = '80%';
-          }
-        }, 8000);
-
-        // At 15s, if there's any js-dos DOM content, trust it and hide overlay
-        setTimeout(() => {
-          if (!loadingOverlay.classList.contains('hidden') && !errorOverlay.classList.contains('show')) {
-            const hasContent = gameContainer.querySelector('.jsdos') ||
-                             gameContainer.querySelector('canvas') ||
-                             gameContainer.querySelector('iframe');
-            if (hasContent) {
-              hideLoading();
-            }
-          }
-        }, 15000);
-
-      } catch (err) {
-        console.error('js-dos init error:', err);
-        loadAttempt++;
-        if (loadAttempt < BUNDLE_URLS.length) {
-          setStatus('First source failed, trying alternative...');
-          setTimeout(initGame, 1000);
-        } else {
-          showError('Failed to initialize the emulator: ' + (err.message || 'Unknown error'));
-        }
+      } catch (e) {
+        showError(
+          'Emulator failed to initialize.',
+          e.message || 'An unexpected error occurred.'
+        );
+        return;
       }
+
+      // Poll for canvas appearance as a backup signal
+      var canvasCheckCount = 0;
+      canvasCheck = setInterval(function() {
+        canvasCheckCount++;
+        var cvs = container.querySelector('canvas');
+        if (cvs) {
+          clearInterval(canvasCheck);
+          canvasCheck = null;
+          setTimeout(function() { hideLoading(); }, 1500);
+        }
+        if (canvasCheckCount > 60) {
+          clearInterval(canvasCheck);
+          canvasCheck = null;
+        }
+      }, 500);
+
+      // Fallback: hide loading after generous timeout
+      setTimeout(function() {
+        if (!emulatorReady && errorBox.classList.contains('hidden')) {
+          hideLoading();
+        }
+      }, LOADING_FALLBACK_MS);
+
+      // Hard timeout
+      loadTimer = setTimeout(function() {
+        if (!emulatorReady && !container.querySelector('canvas')) {
+          showError(
+            'Loading is taking too long.',
+            'The game data might be unavailable. You can retry or check your connection.'
+          );
+        }
+      }, LOAD_TIMEOUT_MS);
     }
 
-    // Start when DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initGame);
+    // Retry
+    window.retryLoad = function() {
+      if (retryCount >= MAX_RETRIES) {
+        showError(
+          'Multiple load attempts failed.',
+          'The emulator or game bundle may be temporarily unavailable. Try again later.'
+        );
+        return;
+      }
+      retryCount++;
+      emulatorReady = false;
+      errorBox.classList.add('hidden');
+      loading.classList.remove('hidden');
+
+      // Cycle through game URL sources on retry
+      gameUrlIndex = retryCount % GAME_URLS.length;
+
+      // Remove previous js-dos DOM (keep our overlays)
+      var old = container.querySelectorAll('.jsdos');
+      for (var i = 0; i < old.length; i++) old[i].remove();
+
+      startProgress();
+      tipRotation = setInterval(rotateTip, 4000);
+      setStatus('Retrying (attempt ' + (retryCount + 1) + ')...');
+
+      if (window.Dos) {
+        startEmulator();
+      } else {
+        loadJsDos(0).then(startEmulator).catch(function(e) {
+          showError('Could not load emulator after retry.', e.message);
+        });
+      }
+    };
+
+    // -- Kick off --
+    startProgress();
+    tipRotation = setInterval(rotateTip, 4000);
+
+    if (window.Dos) {
+      setStatus('Emulator ready. Loading game...');
+      progressVal = 30;
+      startEmulator();
     } else {
-      initGame();
+      loadJsDos(0).then(function() {
+        startEmulator();
+      }).catch(function(e) {
+        showError(
+          'Could not load the DOS emulator.',
+          'Tried ' + JSDOS_SCRIPTS.length + ' CDN sources. ' + (e.message || '')
+        );
+      });
     }
+  })();
   </script>
+
 </body>
 </html>
